@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Homepage{% endblock %}
+
+{% block content %}
+<main>
+    <!-- THIS IS THE NEW, SIMPLIFIED HERO SECTION CONTAINER -->
+    <section class="hero-section">
+        <div class="hero-slider" id="hero-slider">
+            <!-- Dynamic hero slides will be loaded here by JavaScript -->
+        </div>
+    </section>
+
+    <section class="anime-carousel-section container">
+        <div class="section-header">
+            <h2>Top Rated Anime</h2>
+            <div class="carousel-nav">
+                <button class="prev-btn"><i class="fas fa-chevron-left"></i></button>
+                <button class="next-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+        <div class="anime-carousel-wrapper">
+            <div class="anime-carousel" id="top-anime-carousel">
+                <!-- Anime cards will be dynamically inserted here by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+     <section class="anime-carousel-section container">
+        <div class="section-header">
+            <h2>Currently Airing</h2>
+            <div class="carousel-nav">
+                <button class="prev-btn"><i class="fas fa-chevron-left"></i></button>
+                <button class="next-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+        <div class="anime-carousel-wrapper">
+            <div class="anime-carousel" id="seasonal-anime-carousel">
+                <!-- Anime cards will be dynamically inserted here by JavaScript -->
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

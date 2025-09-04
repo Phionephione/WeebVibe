@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}{{ anime_data.title }}{% endblock %}
+
+{% block content %}
+<main class="container">
+    <section class="details-section">
+        <div class="details-poster">
+            <img src="{{ anime_data.image_url }}" alt="{{ anime_data.title }} Poster">
+        </div>
+        <div class="details-content">
+            <h1 class="anime-title-details">{{ anime_data.title }}</h1>
+            
+            <div class="vote-section" data-mal-id="{{ anime_data.mal_id }}">
+                <button class="vote-btn like-btn">
+                    <i class="fas fa-thumbs-up"></i> <span id="like-count">{{ initial_likes }}</span>
+                </button>
+                <button class="vote-btn dislike-btn">
+                    <i class="fas fa-thumbs-down"></i> <span id="dislike-count">{{ initial_dislikes }}</span>
+                </button>
+            </div>
+            
+            <h2>Synopsis</h2>
+            <p class="anime-synopsis">{{ anime_data.synopsis }}</p>
+
+            <div class="streaming-section">
+                <h3>Where to Watch</h3>
+                <div class="streaming-links-container">
+                    {% if anime_data.streaming_links %}
+                        {% for link in anime_data.streaming_links %}
+                            <a href="{{ generate_affiliate_link(link.url, link.name) }}" target="_blank" class="streaming-link">
+                                {{ link.name }}
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <p>No official streaming links found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- RECOMMENDATIONS SECTION -->
+    {% if recommendations %}
+    <section class="anime-carousel-section">
+        <div class="section-header">
+            <h2>You Might Also Like</h2>
+        </div>
+        <div class="anime-carousel-wrapper">
+            <div class="anime-carousel">
+                {% for rec in recommendations %}
+                <div class="anime-card">
+                    <a href="{{ url_for('anime_details', mal_id=rec.mal_id) }}" class="card-link">
+                        <div class="card-image">
+                            <img src="{{ rec.image_url }}" alt="{{ rec.title }}">
+                            <div class="play-overlay"><i class="fas fa-book-open"></i></div>
+                            <div class="card-meta"><span><i class="fas fa-star"></i> {{ rec.score or 'N/A' }}</span></div>
+                        </div>
+                        <h3>{{ rec.title }}</h3>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="comments-section">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% if current_user.is_authenticated %}
+        <form class="comment-form" action="{{ url_for('add_comment', mal_id=anime_data.mal_id) }}" method="POST">
+            <h3>Leave a Comment as {{ current_user.username }}</h3>
+            <textarea name="comment_text" rows="4" placeholder="Share your thoughts..." required></textarea>
+            <button type="submit">Post Comment</button>
+        </form>
+        {% else %}
+        <p>Please <a href="{{ url_for('login', next=request.path) }}">log in</a> to leave a comment.</p>
+        {% endif %}
+
+        <div class="comments-list">
+            {% for comment in comments|reverse %}
+            <div class="comment">
+                <div class="comment-header">
+                    <p class="comment-author"><strong>{{ comment.author.username }}</strong></p>
+                    <div class="comment-actions">
+                        <button class="comment-like-btn" data-comment-id="{{ comment.id }}">
+                            <i class="fas fa-heart"></i> <span class="like-count">{{ comment.likes|length }}</span>
+                        </button>
+                        {% if current_user.is_authenticated and comment.author.id == current_user.id %}
+                        <form action="{{ url_for('delete_comment', comment_id=comment.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="comment-delete-btn" onclick="return confirm('Are you sure you want to delete this comment?');">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="comment-body">{{ comment.text }}</p>
+            </div>
+            {% else %}
+            <p>No comments yet. Be the first to share your thoughts!</p>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Vote logic
+    const voteSection = document.querySelector('.vote-section');
+    if (voteSection) {
+        const malId = voteSection.dataset.malId;
+        const likeBtn = document.querySelector('.like-btn');
+        const dislikeBtn = document.querySelector('.dislike-btn');
+        const likeCountSpan = document.getElementById('like-count');
+        const dislikeCountSpan = document.getElementById('dislike-count');
+        async function sendVote(isLike) {
+            const response = await fetch(`/anime/${malId}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_like: isLike })
+            });
+            const data = await response.json();
+            if (data.success) {
+                likeCountSpan.textContent = data.likes;
+                dislikeCountSpan.textContent = data.dislikes;
+            }
+        }
+        likeBtn.addEventListener('click', () => sendVote(true));
+        dislikeBtn.addEventListener('click', () => sendVote(false));
+    }
+    // Comment like logic
+    const commentLikeButtons = document.querySelectorAll('.comment-like-btn');
+    commentLikeButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const commentId = button.dataset.commentId;
+            try {
+                const response = await fetch(`/comment/${commentId}/like`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const likeCountSpan = button.querySelector('.like-count');
+                    likeCountSpan.textContent = data.likes;
+                }
+            } catch (error) {
+                console.error('Error liking comment:', error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

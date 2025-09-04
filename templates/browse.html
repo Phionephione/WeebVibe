@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Browse by Genre{% endblock %}
+
+{% block content %}
+<main class="container">
+    <section class="anime-carousel-section">
+        <div class="section-header">
+            <h2>Browse by Genre</h2>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="genre-grid">
+            {% for genre in genres %}
+                <a href="{{ url_for('genre_results', genre_id=genre.mal_id, genre_name=genre.name) }}" class="genre-tag">
+                    {{ genre.name }}
+                </a>
+            {% else %}
+                <p>Could not load genres at this time.</p>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

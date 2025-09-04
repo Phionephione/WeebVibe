@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WeebVibe{% endblock %} - Your Anime Community</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container">
+            <!-- UPDATED LOGO NAME -->
+            <a href="{{ url_for('home') }}" class="logo">WeebVibe</a>
+
+            <nav class="nav-links">
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Home</a></li>
+                    <li><a href="{{ url_for('browse_genres') }}">Browse</a></li>
+                </ul>
+            </nav>
+
+            <form class="search-bar" method="GET" action="{{ url_for('search') }}">
+                <input type="search" name="q" placeholder="Search for an anime..." required>
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+            <div class="user-actions">
+                {% if current_user.is_authenticated %}
+                    <span>Welcome, {{ current_user.username }}!</span>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    <footer>
+        <div class="container">
+            <!-- UPDATED FOOTER WITH YOUR NAME -->
+            <p>&copy; 2024 WeebVibe. Created by RaidPhinex.</p>
+        </div>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
