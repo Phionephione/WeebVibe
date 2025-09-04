@@ -10,10 +10,7 @@ from flask_migrate import Migrate
 # --- App and Database Setup ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-super-secret-key-for-development')
-
-# THIS LINE IS UPDATED FOR PRODUCTION DATABASES
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///anime_platform.db').replace("postgres://", "postgresql://", 1)
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -162,17 +159,23 @@ def anime_details(mal_id):
         except requests.exceptions.RequestException as e:
             flash(f"Error fetching from Jikan API: {e}", "error")
             return redirect(url_for('home'))
+
     recommendations = []
     if anime.genres:
         genre_names = [genre['name'] for genre in anime.genres]
-        genre_queries = [Anime.genres.like(f'%{name}%') for name in genre_names]
+        
+        # THIS IS THE CORRECTED LINE FOR POSTGRESQL
+        genre_queries = [db.cast(Anime.genres, db.String).like(f'%{name}%') for name in genre_names]
+        
         recommendations = Anime.query.filter(
             or_(*genre_queries),
             Anime.mal_id != mal_id
         ).limit(7).all()
+        
     initial_likes = Like.query.filter_by(anime_mal_id=mal_id, is_like=True).count()
     initial_dislikes = Like.query.filter_by(anime_mal_id=mal_id, is_like=False).count()
     comments = Comment.query.filter_by(anime_id=mal_id).all()
+    
     return render_template('anime-details.html', 
                            anime_data=anime, 
                            comments=comments,
@@ -211,7 +214,7 @@ def vote(mal_id):
 @app.route('/comment/<int:comment_id>/like', methods=['POST'])
 @login_required
 def like_comment(comment_id):
-    comment = Comment.query.get_or_444(comment_id)
+    comment = Comment.query.get_or_404(comment_id)
     existing_like = CommentLike.query.filter_by(user_id=current_user.id, comment_id=comment.id).first()
     if existing_like:
         db.session.delete(existing_like)
