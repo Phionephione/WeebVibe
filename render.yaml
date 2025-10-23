@@ -1,23 +1,22 @@
 services:
-  # This is the PostgreSQL Database
-  - type: psql
+  - type: db
     name: weebvibe-db
     plan: free
+    databaseName: weebvibedb 
+    user: weebvibe_user
 
-  # This is your Python Web Server
   - type: web
     name: WeebVibe
     plan: free
     runtime: python
     buildCommand: "pip install -r requirements.txt"
-    # This robust command runs migrations THEN starts the server
     startCommand: "flask db upgrade && gunicorn app:app"
     envVars:
       - key: DATABASE_URL
         fromService:
-          type: psql
+          type: db
           name: weebvibe-db
-          property: internalConnectionString
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
     autoDeploy: true
