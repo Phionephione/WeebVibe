@@ -1,10 +1,10 @@
-services:
-  - type: db
-    name: weebvibe-db
-    plan: free
-    databaseName: weebvibedb 
-    user: weebvibe_user
+# This is the top-level list of all resources for our Blueprint
 
+databases:
+  - name: weebvibe-db
+    plan: free
+
+services:
   - type: web
     name: WeebVibe
     plan: free
@@ -13,10 +13,8 @@ services:
     startCommand: "flask db upgrade && gunicorn app:app"
     envVars:
       - key: DATABASE_URL
-        fromService:
-          type: db
+        fromDatabase:
           name: weebvibe-db
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
-    autoDeploy: true
