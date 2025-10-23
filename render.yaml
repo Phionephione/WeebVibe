@@ -1,0 +1,36 @@
+services:
+  # This is your PostgreSQL Database
+  - type: psql
+    name: weebvibe-db
+    plan: free
+
+  # This is your Python Web Server (your website)
+  - type: web
+    name: WeebVibe
+    plan: free
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: psql
+          name: weebvibe-db
+          property: internalConnectionString
+      - key: SECRET_KEY
+        generateValue: true # Render will automatically generate a secure secret key
+    autoDeploy: true
+
+  # This is the special job that will run your database migration
+  - type: job
+    name: database-migrator
+    plan: free
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "flask db upgrade"
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: psql
+          name: weebvibe-db
+          property: internalConnectionString
